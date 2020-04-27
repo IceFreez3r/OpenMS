@@ -49,6 +49,9 @@
 
 #include <QtCore/QDir>
 
+#include <OpenMS/SYSTEM/StopWatch.h>
+#include <iostream>
+
 #ifdef _OPENMP
 #endif
 
@@ -157,6 +160,9 @@ namespace OpenMS
 
   void FeatureFinderAlgorithmPicked::run()
   {
+    StopWatch clock = StopWatch();
+    clock.start();
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Start\n";
     //-------------------------------------------------------------------------
     //General initialization
     //---------------------------------------------------------------------------
@@ -256,6 +262,9 @@ namespace OpenMS
       log_.open("debug/log.txt");
     }
 
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Init\n";
+    clock.reset();
+
     //---------------------------------------------------------------------------
     //Step 1:
     //Precalculate intensity scores for peaks
@@ -313,6 +322,9 @@ namespace OpenMS
       ff_->endProgress();
     }
 
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 1\n";
+      clock.reset();
+
     //---------------------------------------------------------------------------
     //Step 2:
     //Precalculate mass trace scores and local trace maximum for each peak
@@ -362,12 +374,15 @@ namespace OpenMS
           trace_score /= 2 * min_spectra_;
 
           //store final score for later use
-          spectrum.getFloatDataArrays()[0][p] = trace_score;
-          spectrum.getFloatDataArrays()[2][p] = is_max_peak;
+          map_[s].getFloatDataArrays()[0][p] = trace_score;
+          map_[s].getFloatDataArrays()[2][p] = is_max_peak;
         }
       }
       ff_->endProgress();
     }
+
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 2\n";
+      clock.reset();
 
     //---------------------------------------------------------------------------
     //Step 2.5:
@@ -443,6 +458,9 @@ namespace OpenMS
       ff_->endProgress();
     }
 
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 2.5\n";
+      clock.reset();
+
     //-------------------------------------------------------------------------
     //Step 3:
     //Charge loop (create seeds and features for each charge separately)
@@ -451,6 +469,7 @@ namespace OpenMS
     Int feature_nr_global = 0; //counter for the number of features (debug info)
     for (SignedSize c = charge_low; c <= charge_high; ++c)
     {
+        clock.reset();
       UInt meta_index_isotope = 3 + c - charge_low;
       UInt meta_index_overall = 3 + charge_count + c - charge_low;
 
@@ -499,6 +518,10 @@ namespace OpenMS
         }
       }
       ff_->endProgress();
+
+      std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 3.1" << "\n";
+      clock.reset();
+
       //-----------------------------------------------------------
       //Step 3.2:
       //Find seeds for this charge
@@ -587,6 +610,10 @@ namespace OpenMS
       ff_->endProgress();
       std::cout << "Found " << seeds.size() << " seeds for charge " << c << "." << std::endl;
 
+      std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 3.2\n";
+      clock.reset();
+      StopWatch clock331, clock332, clock333, clock334, clock335;
+
       //------------------------------------------------------------------
       //Step 3.3:
       //Extension of seeds
@@ -614,6 +641,7 @@ namespace OpenMS
         //Extend all mass traces
         //------------------------------------------------------------------
 
+        clock331.start();
         const SpectrumType& spectrum = map_[seeds[i].spectrum];
         const PeakType& peak = spectrum[seeds[i].peak];
 
@@ -652,6 +680,7 @@ namespace OpenMS
           //check if the traces are still valid
           double seed_mz = map_[seeds[i].spectrum][seeds[i].peak].getMZ();
 
+
           if (!traces.isValid(seed_mz, trace_tolerance_))
           {
             abort_(seeds[i], "Could not extend seed");
@@ -659,6 +688,8 @@ namespace OpenMS
           }
           else
           {
+              clock331.stop();
+              clock332.start();
 
             //------------------------------------------------------------------
             //Step 3.3.2:
@@ -707,6 +738,9 @@ namespace OpenMS
 
             //------------------------------------------------------------------
 
+             clock332.stop();
+             clock333.start();
+
             //------------------------------------------------------------------
             //Step 3.3.3:
             //Crop feature according to RT fit (2.5*sigma) and remove badly fitting traces
@@ -714,6 +748,9 @@ namespace OpenMS
             MassTraces new_traces;
             cropFeature_(fitter, traces, new_traces);
 
+
+            clock333.stop();
+            clock334.start();
             //------------------------------------------------------------------
             //Step 3.3.4:
             //Check if feature is ok
@@ -735,7 +772,6 @@ namespace OpenMS
               }
             }
 
-
             //validity output
             if (!feature_ok)
             {
@@ -746,6 +782,8 @@ namespace OpenMS
             {
               traces = new_traces;
 
+              clock334.stop();
+              clock335.start();
               //------------------------------------------------------------------
               //Step 3.3.5:
               //Feature creation
@@ -830,9 +868,11 @@ namespace OpenMS
                   }
                 }
               }
+
             }
           }
         } // three if/else statements instead of continue (disallowed in OpenMP)
+        clock335.stop();
       } // end of OPENMP over seeds
 
       // Here we have to evaluate which seeds are already contained in
@@ -867,8 +907,18 @@ namespace OpenMS
 
       IF_MASTERTHREAD ff_->endProgress();
       std::cout << "Found " << feature_candidates << " feature candidates for charge " << c << "." << std::endl;
+        std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 3.3\n";
+        std::cout << "3.3.1: " << clock331.toString() << "\n";
+        std::cout << "3.3.2: " << clock332.toString() << "\n";
+        std::cout << "3.3.3: " << clock333.toString() << "\n";
+        std::cout << "3.3.4: " << clock334.toString() << "\n";
+        std::cout << "3.3.5: " << clock335.toString() << "\n";
+
     }
+      clock.reset();
     // END OPENMP
+
+
 
     //------------------------------------------------------------------
     //Step 4:
@@ -975,6 +1025,9 @@ namespace OpenMS
     features_->sortByIntensity(true);
     ff_->endProgress();
 
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Step 4\n";
+    clock.reset();
+
     // Abort reasons
     OPENMS_LOG_INFO << '\n';
     OPENMS_LOG_INFO << "Info: reasons for not finalizing a feature during its construction:\n";
@@ -1012,6 +1065,8 @@ namespace OpenMS
       MzMLFile().store("debug/input.mzML", map_);
     }
 
+    std::cout << ">>>>>Line " << __LINE__ << ": " << clock.toString() << " Abort reasons\n";
+    clock.reset();
   }
 
   FeatureFinderAlgorithm* FeatureFinderAlgorithmPicked::create()
