@@ -309,6 +309,21 @@ private:
     FeatureFinderAlgorithmPicked& operator=(const FeatureFinderAlgorithmPicked&);
     /// Not implemented
     FeatureFinderAlgorithmPicked(const FeatureFinderAlgorithmPicked&);
+
+      void StepOne();
+
+      void StepTwo() const;
+
+      void
+      StepThree(double min_feature_score, SignedSize charge_low, SignedSize charge_high,
+                const Param &trace_fitter_params,
+                bool user_seeds, double user_rt_tol, double user_mz_tol, double user_seed_score, UInt charge_count);
+
+      void StepInit(double &min_feature_score, SignedSize &charge_low, SignedSize &charge_high, Size &max_isotopes,
+                    Param &trace_fitter_params, bool &user_seeds, double &user_rt_tol, double &user_mz_tol,
+                    double &user_seed_score, UInt &charge_count);
+
+      void StepTwoFive(SignedSize charge_high, Size max_isotopes) const;
   };
 
 } // namespace OpenMS
