@@ -312,7 +312,7 @@ private:
 
       void StepOne();
 
-      void StepTwo() const;
+      void StepTwo();
 
       void
       StepThree(double min_feature_score, SignedSize charge_low, SignedSize charge_high,
@@ -323,7 +323,16 @@ private:
                     Param &trace_fitter_params, bool &user_seeds, double &user_rt_tol, double &user_mz_tol,
                     double &user_seed_score, UInt &charge_count);
 
-      void StepTwoFive(SignedSize charge_high, Size max_isotopes) const;
+      void StepTwoFive(SignedSize charge_high, Size max_isotopes);
+      void StepThreeOne(SignedSize c, UInt meta_index_isotope);
+
+      void StepThreeTwo(bool user_seeds, double user_rt_tol, double user_mz_tol, double user_seed_score, SignedSize c,
+                        UInt meta_index_isotope, UInt meta_index_overall, std::vector<Seed> &seeds);
+
+      void
+      StepThreeThree(double min_feature_score, const Param &trace_fitter_params, Int plot_nr_global,
+                     Int feature_nr_global,
+                     SignedSize c, UInt meta_index_overall, Size feature_candidates, const std::vector<Seed> &seeds);
   };
 
 } // namespace OpenMS
