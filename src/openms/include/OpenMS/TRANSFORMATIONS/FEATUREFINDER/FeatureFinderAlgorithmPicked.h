@@ -333,6 +333,37 @@ private:
       StepThreeThree(double min_feature_score, const Param &trace_fitter_params, Int plot_nr_global,
                      Int feature_nr_global,
                      SignedSize c, UInt meta_index_overall, Size feature_candidates, const std::vector<Seed> &seeds);
+
+    void StepThreeThreeTwo(Param const &trace_fitter_params, MassTraces &traces, double &egh_tau, TraceFitter *&fitter);
+
+    MassTraces StepThreeThreeThree(MassTraces const &traces, TraceFitter *fitter);
+
+    void StepThreeThreeFour(double min_feature_score,
+            FeatureFinderAlgorithmPicked::PeakType const &peak,
+            FeatureFinderAlgorithmPicked::MassTraces const &traces,
+            double seed_mz,
+            Int plot_nr,
+            TraceFitter *fitter,
+            FeatureFinderAlgorithmPicked::MassTraces &new_traces,
+            String &error_msg,
+            double &fit_score,
+            double &correlation,
+            double &final_score,
+            bool &feature_ok);
+
+    void StepThreeThreeFive(SignedSize c,
+                            std::map<Size, std::vector<Size> > &seeds_in_features,
+                            IsotopePattern const &best_pattern,
+                            MassTraces const &traces,
+                            Int plot_nr,
+                            double egh_tau,
+                            TraceFitter *fitter,
+                            double fit_score,
+                            double correlation,
+                            double final_score,
+                            std::vector<Seed> const &seeds,
+                            std::map<Size, Feature> &tmp_feature_map,
+                            SignedSize &i) const;
   };
 
 } // namespace OpenMS
